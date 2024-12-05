@@ -1,0 +1,42 @@
+{
+   "vendor_identifier": "Rapid7",
+   "version": "2.0",
+   "name": "Rapid7_Logout",
+   "content_type": "text/xml",
+   "quoting": "XMLA",
+   "type": "REST_EVENT",
+   "event_type": ["SESSION"],
+   "steps": [
+      {
+         "name": "logout: request",
+         "parse": "XMLA",
+         "operation": "POST",
+         "no_connection_debug": false,
+         "body_list": [
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+            "<LogoutRequest session-id=\"${S::SESSID}\"/>"
+         ]
+      },
+      {
+         "operation": "CONDITION",
+         "name": "logout: errorcheck",
+         "condition": {
+            "statements": [
+               {
+                  "op": "!=",
+                  "right": "${P:A:PARSE[[name]]}",
+                  "left": "LogoutResponse"
+               },
+               {
+                  "op": "!=",
+                  "right": "1",
+                  "left": "${P:A:PARSE{{success}}}"
+               }
+
+            ],
+            "condition_type": "AND",
+            "error": true
+         }
+      }
+   ]
+}

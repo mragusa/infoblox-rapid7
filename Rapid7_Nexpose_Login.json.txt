@@ -1,0 +1,47 @@
+{
+   "vendor_identifier": "Rapid7",
+   "version": "2.0",
+   "name": "Rapid7_Login",
+   "content_type": "text/xml",
+   "quoting": "XMLA",
+   "type": "REST_EVENT",
+   "event_type": ["SESSION"],
+   "steps": [
+      {
+         "name": "login: remove basic auth headers",
+         "body": "${XC:ASSIGN:{H:Authorization}:{S:}}",
+         "operation": "NOP"
+      },
+      {
+         "name": "login: request",
+         "parse": "XMLA",
+         "operation": "POST",
+         "no_connection_debug": false,
+         "body_list": [
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+            "<LoginRequest user-id=\"${UT::USERNAME}\" password=\"${UT::PASSWORD}\"/>"
+         ]
+      },
+      {
+         "name": "login: errorcheck",
+         "operation": "CONDITION",
+         "condition": {
+            "statements": [
+               {
+                  "op": "!=",
+                  "right": "${P:A:PARSE[[name]]}",
+                  "left": "LoginResponse"
+               },
+               {
+                  "op": "!=",
+                  "right": "1",
+                  "left": "${P:A:PARSE{{success}}}"
+               }
+            ],
+            "condition_type": "AND",
+            "else_eval": "${XC:COPY:{S:SESSID}:{P:PARSE{{session-id}}}}",
+            "error": true
+         }
+      }
+   ]
+}
