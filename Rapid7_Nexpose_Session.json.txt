@@ -1,0 +1,31 @@
+{
+ "name": "Rapid7 Session",
+ "version": "2.0",
+ "type": "REST_ENDPOINT",
+ "comment": "no comments",
+
+ "vendor_identifier": "Rapid7",
+ "path": "/api/1.1/xml",
+ "login_template": "Rapid7_Login",
+ "logout_template": "Rapid7_Logout",
+ "logout_only_at_template_end": true,
+
+ "step_execution_limit": 100,
+ "inactivity_interval": 100000,
+
+ "keepalive": true,
+ "override_path": true,
+
+ "rate_limit": 0,
+ "rate_limit_requests": 10,
+ "rate_limit_interval": 1000,
+ "rate_limit_reset": 1000,
+ "retry": 0,
+ "retry_template": 0,
+ "timeout": 10,
+
+ "logout_any_condition": true,
+ "logout_regexp": "asd.*",
+ "logout_status_code": 34
+
+}
