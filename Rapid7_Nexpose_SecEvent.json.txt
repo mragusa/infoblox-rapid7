@@ -1,0 +1,826 @@
+{
+    "version": "5.0",
+    "name": "Rapid7 Nexpose Security",
+    "comment": "",
+    "type": "REST_EVENT",
+    "event_type": [
+        "RPZ",
+        "TUNNEL"
+    ],
+    "action_type": "Rapid7 Nexpose Scan assets by security event",
+    "content_type": "application/json",
+    "vendor_identifier": "Rapid7",
+    "steps": [
+        {
+            "name": "Debug#0",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "checkIPEAs",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [
+                    {
+                        "left": "${E:A:ip.extattrs{R7_ScanOnEvent}}",
+                        "op": "==",
+                        "right": ""
+                    }
+                ],
+                "next": "checkNetEAs"
+            }
+        },
+        {
+            "name": "Debug#1",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "checkIPScanOnEvent",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [
+                    {
+                        "left": "${E:A:ip.extattrs{R7_Site}}",
+                        "op": "==",
+                        "right": ""
+                    },
+                    {
+                        "left": "${E:A:ip.extattrs{R7_ScanOnEvent}}",
+                        "op": "==",
+                        "right": "false"
+                    }
+                ],
+                "stop": true
+            }
+        },
+        {
+            "name": "Debug#2",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "checkIfHOSTname",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [
+                    {
+                        "left": "${E:A:ip.names[0]}",
+                        "op": "==",
+                        "right": ""
+                    }
+                ],
+                "next": "setLIPVarsWithOutHostName"
+            }
+        },
+        {
+            "name": "setLIPVarsWithHostName",
+            "operation": "NOP",
+            "body_list": [
+                "${XC:COPY:{L:source_ip}:{E:source_ip}}",
+                "${XC:ASSIGN:{L:EASource}:{S:IP}}",
+                "${XC:COPY:{L:Hostname}:{E:ip.names[0]}}",
+                "${XC:ASSIGN:{L:SaveEA}:{S:false}}",
+                "${XC:COPY:{L:Site}:{E:ip.extattrs{R7_Site}}}"
+            ]
+        },
+        {
+            "name": "Skip next step to avoid errors",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [
+                    {
+                        "left": "1",
+                        "op": "==",
+                        "right": "1"
+                    }
+                ],
+                "next": "setIPSiteID"
+            }
+        },
+        {
+            "name": "setLIPVarsWithOutHostName",
+            "operation": "NOP",
+            "body_list": [
+                "${XC:COPY:{L:source_ip}:{E:source_ip}}",
+                "${XC:ASSIGN:{L:EASource}:{S:IP}}",
+                "${XC:ASSIGN:{L:Hostname}:{S:}}",
+                "${XC:ASSIGN:{L:SaveEA}:{S:false}}",
+                "${XC:COPY:{L:Site}:{E:ip.extattrs{R7_Site}}}"
+            ]
+        },
+        {
+            "name": "Debug#3",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "setIPSiteID",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [
+                    {
+                        "left": "${E:A:ip.extattrs{R7_SiteID}}",
+                        "op": "==",
+                        "right": ""
+                    }
+                ],
+                "eval": "${XC:ASSIGN:{L:SiteID}:{I:0}}${XC:ASSIGN:{L:LastScan}:{S:}}",
+                "else_eval": "${XC:COPY:{L:SiteID}:{E:ip.extattrs{R7_SiteID}}}"
+            }
+        },
+        {
+            "name": "Debug#4",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "setIPLastScan",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [
+                    {
+                        "left": "${E:A:ip.extattrs{R7_LastScan}}",
+                        "op": "==",
+                        "right": ""
+                    }
+                ],
+                "eval": "${XC:ASSIGN:{L:LastScan}:{S:}}",
+                "else_eval": "${XC:COPY:{L:LastScan}:{E:ip.extattrs{R7_LastScan}}}"
+            }
+        },
+        {
+            "name": "Debug#5",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "setIPScanTemplate",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [
+                    {
+                        "left": "${E:A:ip.extattrs{R7_ScanTemplate}}",
+                        "op": "==",
+                        "right": ""
+                    }
+                ],
+                "eval": "${XC:ASSIGN:{L:ScanTemplate}:{S:default}}",
+                "else_eval": "${XC:COPY:{L:ScanTemplate}:{E:ip.extattrs{R7_ScanTemplate}}}"
+            }
+        },
+        {
+            "name": "Debug#6",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "setIPAddByHostname",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [
+                    {
+                        "left": "${E:A:ip.extattrs{R7_AddByHostname}}",
+                        "op": "==",
+                        "right": ""
+                    }
+                ],
+                "eval": "${XC:ASSIGN:{L:AddByHostname}:{S:false}}",
+                "else_eval": "${XC:COPY:{L:AddByHostname}:{E:ip.extattrs{R7_AddByHostname}}}"
+            }
+        },
+        {
+            "name": "Debug#7",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "checkNetView",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [
+                    {
+                        "left": "${E:A:network.network_view}",
+                        "op": "==",
+                        "right": ""
+                    }
+                ],
+                "next": "assignScanVars",
+                "else_eval": "${XC:COPY:{L:network_view}:{E:network.network_view}}"
+            }
+        },
+        {
+            "name": "Debug#8",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "Get IPv4Fixed _ref",
+            "operation": "GET",
+            "transport": {
+                "path": "fixedaddress?ipv4addr=${L:U:source_ip}&network_view=${L:U:network_view}"
+            },
+            "wapi": "v2.6"
+        },
+        {
+            "name": "Debug#9",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "operation": "CONDITION",
+            "name": "wapi_response_getIPv4Fix_ref",
+            "condition": {
+                "statements": [
+                    {
+                        "left": "${P:A:PARSE[0]{_ref}}",
+                        "op": "!=",
+                        "right": ""
+                    }
+                ],
+                "condition_type": "AND",
+                "next": "Get_Objref"
+            }
+        },
+        {
+            "name": "Debug#10",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "Get HostIPv4 _ref",
+            "operation": "GET",
+            "transport": {
+                "path": "record:host?ipv4addr=${L:U:source_ip}&network_view=${L:U:network_view}"
+            },
+            "wapi": "v2.6"
+        },
+        {
+            "name": "Debug#11",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "operation": "CONDITION",
+            "name": "wapi_response_getIPv4Host_ref",
+            "condition": {
+                "statements": [
+                    {
+                        "left": "${P:A:PARSE[0]{_ref}}",
+                        "op": "!=",
+                        "right": ""
+                    }
+                ],
+                "condition_type": "AND",
+                "next": "Get_Objref"
+            }
+        },
+        {
+            "name": "Debug#12",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "Get IPv6Fixed _ref",
+            "operation": "GET",
+            "transport": {
+                "path": "ipv6fixedaddress?ipv4addr=${L:U:source_ip}&network_view=${L:U:network_view}"
+            },
+            "wapi": "v2.6"
+        },
+        {
+            "name": "Debug#13",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "operation": "CONDITION",
+            "name": "wapi_response_getIPv6Fix_ref",
+            "condition": {
+                "statements": [
+                    {
+                        "left": "${P:A:PARSE[0]{_ref}}",
+                        "op": "!=",
+                        "right": ""
+                    }
+                ],
+                "condition_type": "AND",
+                "next": "Get_Objref"
+            }
+        },
+        {
+            "name": "Debug#14",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "Get HostIPv6 _ref",
+            "operation": "GET",
+            "transport": {
+                "path": "record:host?ipv6addr=${L:U:source_ip}&network_view=${L:U:network_view}"
+            },
+            "wapi": "v2.6"
+        },
+        {
+            "name": "Debug#15",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "operation": "CONDITION",
+            "name": "wapi_response_getIPv6Host_ref",
+            "condition": {
+                "statements": [
+                    {
+                        "left": "${P:A:PARSE[0]{_ref}}",
+                        "op": "!=",
+                        "right": ""
+                    }
+                ],
+                "condition_type": "AND",
+                "next": "Get_Objref"
+            }
+        },
+        {
+            "name": "Debug#16",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "Get_Objref",
+            "operation": "CONDITION",
+            "condition": {
+                "statements": [
+                    {
+                        "left": "${P:A:PARSE[0]{_ref}}",
+                        "op": "!=",
+                        "right": ""
+                    }
+                ],
+                "condition_type": "AND",
+                "eval": "${XC:COPY:{L:Obj_ref}:{P:PARSE[0]{_ref}}}${XC:ASSIGN:{L:SaveEA}:{S:true}}"
+            }
+        },
+        {
+            "name": "Debug#17",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "CheckIfHost",
+            "operation": "CONDITION",
+            "condition": {
+                "statements": [
+                    {
+                        "left": "${L:A:Obj_ref}",
+                        "op": "=~",
+                        "right": "record:host"
+                    }
+                ],
+                "condition_type": "AND",
+                "eval": "${XC:ASSIGN:{L:EASource}:{S:HOST}}"
+            }
+        },
+        {
+            "name": "Debug#18",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "goToSiteIDcheck",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [
+                    {
+                        "left": "",
+                        "op": "==",
+                        "right": ""
+                    }
+                ],
+                "next": "assignScanVars"
+            }
+        },
+        {
+            "name": "Debug#19",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "checkNetEAs",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [
+                    {
+                        "left": "${E:A:network.extattrs{R7_ScanOnEvent}}",
+                        "op": "==",
+                        "right": ""
+                    },
+                    {
+                        "left": "${E:A:network.extattrs{R7_ScanOnEvent}}",
+                        "op": "==",
+                        "right": "false"
+                    }
+                ],
+                "stop": true
+            }
+        },
+        {
+            "name": "Debug#20",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "setLNetVars",
+            "operation": "NOP",
+            "body_list": [
+                "${XC:COPY:{L:source_ip}:{E:source_ip}}",
+                "${XC:COPY:{L:Site}:{E:network.extattrs{R7_Site}}}",
+                "${XC:ASSIGN:{L:LastScan}:{S:}}",
+                "${XC:ASSIGN:{L:EASource}:{S:Net}}",
+                "${XC:ASSIGN:{L:SaveEA}:{S:false}}",
+                "${XC:ASSIGN:{L:Hostname}:{S:}}",
+                "${XC:ASSIGN:{L:AddByHostname}:{S:false}}"
+            ]
+        },
+        {
+            "name": "Debug#21",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "setNetSiteID",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [
+                    {
+                        "left": "${E:A:network.extattrs{R7_SiteID}}",
+                        "op": "==",
+                        "right": ""
+                    }
+                ],
+                "eval": "${XC:ASSIGN:{L:SiteID}:{I:0}}${XC:ASSIGN:{L:LastScan}:{S:}}",
+                "else_eval": "${XC:COPY:{L:SiteID}:{E:network.extattrs{R7_SiteID}}}"
+            }
+        },
+        {
+            "name": "Debug#22",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "setNetScanTemplate",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [
+                    {
+                        "left": "${E:A:network.extattrs{R7_ScanTemplate}}",
+                        "op": "==",
+                        "right": ""
+                    }
+                ],
+                "eval": "${XC:ASSIGN:{L:ScanTemplate}:{S:default}}",
+                "else_eval": "${XC:COPY:{L:ScanTemplate}:{E:network.extattrs{R7_ScanTemplate}}}"
+            }
+        },
+        {
+            "name": "Debug#23",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "assignScanVars",
+            "operation": "NOP",
+            "body_list": [
+                "${XC:COPY:{L:ScanDate}:{UT:TIME}}${XC:FORMAT:TRUNCATE:{L:ScanDate}:{10t}}",
+                "${XC:COPY:{L:R7ScanSchTime}:{UT:EPOCH}}${XC:FORMAT:DATE_STRFTIME:{L:R7ScanSchTime}:{%Y%m%dT%H%M59000Z}}"
+            ]
+        },
+        {
+            "name": "Debug#24",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "checkIFScannedToday",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [
+                    {
+                        "left": "${L:A:LastScan}",
+                        "op": "==",
+                        "right": "${L:A:ScanDate}"
+                    }
+                ],
+                "stop": true
+            }
+        },
+        {
+            "name": "Debug#25",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "Check SiteID",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [
+                    {
+                        "left": "${L:A:SiteID}",
+                        "op": "!=",
+                        "right": "0"
+                    }
+                ],
+                "next": "Create a schedule"
+            }
+        },
+        {
+            "name": "Debug#26",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "Request R7 sites",
+            "parse": "JSON",
+            "operation": "GET",
+            "transport": {
+                "path": "/api/3/sites"
+            }
+        },
+        {
+            "name": "Debug#27",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "Copy_Sites_To_Variable",
+            "operation": "NOP",
+            "body": "${XC:COPY:{L:site_list}:{P:PARSE{resources}}"
+        },
+        {
+            "name": "Debug#28",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "Check if sites list is empty",
+            "operation": "CONDITION",
+            "condition": {
+                "statements": [
+                    {
+                        "left": "${L:L:site_list}",
+                        "op": "==",
+                        "right": "0"
+                    }
+                ],
+                "condition_type": "AND",
+                "stop": true
+            }
+        },
+        {
+            "name": "Debug#29",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "Pop site from the list",
+            "operation": "VARIABLEOP",
+            "variable_ops": [
+                {
+                    "operation": "POP",
+                    "type": "COMPOSITE",
+                    "destination": "L:a_site",
+                    "source": "L:site_list"
+                }
+            ]
+        },
+        {
+            "name": "Debug#30",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "check_a_site",
+            "operation": "CONDITION",
+            "condition": {
+                "statements": [
+                    {
+                        "left": "${L:A:Site}",
+                        "op": "!=",
+                        "right": "${L:A:a_site{{name}}}"
+                    }
+                ],
+                "condition_type": "AND",
+                "next": "Check if sites list is empty",
+                "else_eval": "${XC:COPY:{L:SiteID}:{L:a_site{{id}}}}"
+            }
+        },
+        {
+            "name": "Debug#31",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "checkSaveSiteID",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [
+                    {
+                        "left": "${L:A:SaveEA}",
+                        "op": "!=",
+                        "right": "true"
+                    }
+                ],
+                "next": "Create a schedule"
+            }
+        },
+        {
+            "name": "Debug#32",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "Update SiteID",
+            "operation": "PUT",
+            "transport": {
+                "path": "${L:A:Obj_ref}"
+            },
+            "wapi": "v2.6",
+            "wapi_quoting": "JSON",
+            "body_list": [
+                "{",
+                "\"extattrs+\":{\"R7_SiteID\": { \"value\": \"${L:A:SiteID}\"}}",
+                "}"
+            ]
+        },
+        {
+            "name": "Debug#33",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "Create a schedule",
+            "operation": "SERIALIZE",
+            "serializations": [
+                {
+                    "destination": "L:R7ScanSch",
+                    "content": ", \"templateId\":\"${L:A:ScanTemplate}\""
+                },
+                {
+                    "destination": "L:R7ScanByHost",
+                    "content": "${L:A:Hostname}"
+                },
+                {
+                    "destination": "L:R7ScanByIP",
+                    "content": "${L:A:source_ip}"
+                }
+            ]
+        },
+        {
+            "name": "Debug#34",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "scanByHostname",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [
+                    {
+                        "left": "${L:A:AddByHostname}",
+                        "op": "==",
+                        "right": "true"
+                    },
+                    {
+                        "left": "${L:A:Hostname}",
+                        "op": "!=",
+                        "right": ""
+                    },
+                    {
+                        "left": "${L:A:EASource}",
+                        "op": "==",
+                        "right": "HOST"
+                    }
+                ],
+                "eval": "${XC:COPY:{L:R7ScanHostsRanges}:{L:R7ScanByHost}}",
+                "else_eval": "${XC:COPY:{L:R7ScanHostsRanges}:{L:R7ScanByIP}}"
+            }
+        },
+        {
+            "name": "Debug#35",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "skipSchedule",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [
+                    {
+                        "left": "${L:A:ScanTemplate}",
+                        "op": "==",
+                        "right": "default"
+                    },
+                    {
+                        "left": "${L:A:ScanTemplate}",
+                        "op": "==",
+                        "right": ""
+                    }
+                ],
+                "eval": "${XC:ASSIGN:{L:R7ScanSch}:{S:}}"
+            }
+        },
+        {
+            "name": "Debug#36",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "RequestAssetScan",
+            "operation": "POST",
+            "parse": "JSON",            
+            "transport": {
+                "path": "/api/3/sites/${L:A:SiteID}/scans"
+            },
+            "body_list": [
+                "{",
+                    "\"hosts\": [",
+                        "\"${L:A:R7ScanHostsRanges}\"",
+                    "]",
+                    "${L:A:R7ScanSch}",
+                "}"
+            ]
+        },
+        {
+            "name": "Debug#37",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "checkSaveLastScan",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [
+                    {
+                        "left": "${L:A:SaveEA}",
+                        "op": "!=",
+                        "right": "true"
+                    },
+                    {
+                        "left": "${L:A:EASource}",
+                        "op": "==",
+                        "right": "Net"
+                    }
+                ],
+                "next": "Fin"
+            }
+        },
+        {
+            "name": "Debug#39",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "Update R7_LastScan",
+            "operation": "PUT",
+            "transport": {
+                "path": "${L:A:Obj_ref}"
+            },
+            "wapi": "v2.6",
+            "wapi_quoting": "JSON",
+            "body_list": [
+                "{",
+                "\"extattrs+\":{\"R7_LastScan\": { \"value\": \"${L:U:ScanDate}\"}}",
+                "}"
+            ]
+        },
+        {
+            "name": "Debug#40",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "Fin",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{L:}}${XC:DEBUG:{E:}}${XC:DEBUG:{P:}}"
+        }
+    ]
+}

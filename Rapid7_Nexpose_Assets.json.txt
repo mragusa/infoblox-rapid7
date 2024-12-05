@@ -1,0 +1,892 @@
+{
+    "version": "5.0",
+    "name": "Rapid7 Nexpose Assets",
+    "comment": "",
+    "type": "REST_EVENT",
+    "event_type": [
+        "LEASE",
+        "NETWORK_IPV4",
+        "RANGE_IPV4",
+        "FIXED_ADDRESS_IPV4",
+        "HOST_ADDRESS_IPV4",
+        "NETWORK_IPV6",
+        "RANGE_IPV6",
+        "FIXED_ADDRESS_IPV6",
+        "HOST_ADDRESS_IPV6"
+    ],
+    "action_type": "Rapid7 Nexpose Assets management",
+    "vendor_identifier": "Rapid7",
+    "quoting": "JSON",
+    "steps": [
+       {
+            "name": "Debug#first",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+          {
+            "name": "skip object modification",
+            "operation": "CONDITION",
+            "condition": {
+                "statements": [{
+                        "left": "${E:A:operation_type}",
+                        "op": "==",
+                        "right": "MODIFY"
+                    },
+                    {
+                        "left": "${E:A:operation_type}",
+                        "op": "==",
+                        "right": "DELETE"
+                    }
+                ],
+                "condition_type": "OR",
+                "stop": true
+            }
+        },
+        {
+            "name": "defaultValues",
+            "operation": "NOP",
+            "body": "${XC:ASSIGN:{L:IPTo}:{S:}}${XC:ASSIGN:{L:Hostname}:{S:}}${XC:ASSIGN:{L:lChar}:{S:}}"
+        },
+        {
+            "name": "checkEType_Lease_to_skip_to_Lease",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [{
+                    "left": "${E:A:event_type}",
+                    "op": "==",
+                    "right": "LEASE"
+                }],
+                "next": "skip if not defined for lease"
+            }
+        },
+        {
+            "name": "skip if Site is not defined or sync not requested",
+            "operation": "CONDITION",
+            "condition": {
+                "statements": [{
+                        "left": "${E:A:values{extattrs}{R7_Site}{value}}",
+                        "op": "==",
+                        "right": ""
+                    },
+                    {
+                        "left": "${E:A:values{extattrs}{R7_Sync}{value}}",
+                        "op": "==",
+                        "right": ""
+                    },
+                    {
+                        "left": "${E:A:values{extattrs}{R7_Sync}{value}}",
+                        "op": "==",
+                        "right": "false"
+                    }
+                ],
+                "condition_type": "OR",
+                "stop": true
+            }
+        },
+        {
+            "name": "skip synced host",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [{
+                        "left": "${E:A:operation_type}",
+                        "op": "==",
+                        "right": "INSERT"
+                    },
+                    {
+                        "left": "${E:A:values{extattrs}{R7_SyncedAt}{value}}",
+                        "op": "!=",
+                        "right": ""
+                    }
+                ],
+                "stop": true
+            }
+        },
+        {
+            "name": "assignLVarsNet",
+            "operation": "NOP",
+            "body_list": [
+                "${XC:COPY:{L:Site}:{E:values{extattrs}{R7_Site}{value}}}",
+                "${XC:COPY:{L:ScanTemplate}:{E:values{extattrs}{R7_ScanTemplate}{value}}}",
+                "${XC:COPY:{L:ScanOnAdd}:{E:values{extattrs}{R7_ScanOnAdd}{value}}}",
+                "${XC:COPY:{L:Obj_ref}:{E:values{_ref}}}",
+                "${XC:ASSIGN:{L:SaveEA}:{S:true}}"
+            ]
+        },
+        {
+            "name": "Debug#a",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "SetR7_IPF_Network",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [{
+                        "left": "${E:A:event_type}",
+                        "op": "==",
+                        "right": "NETWORK_IPV4"
+                    },
+                    {
+                        "left": "${E:A:event_type}",
+                        "op": "==",
+                        "right": "NETWORK_IPV6"
+                    }
+                ],
+                "eval": "${XC:COPY:{L:Network}:{E:values{network}}}${XC:NETWORKTORANGE:{L:Network}:{L:RangeFromNet}}${XC:ASSIGN:{L:ObjType}:{S:NETWORK}}${XC:COPY:{L:IPFrom}:{L:RangeFromNet{{from}}}}${XC:COPY:{L:IPTo}:{L:RangeFromNet{{to}}}}"
+            }
+        },
+        {
+            "name": "Debug#b",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "SetR7_IPF_Range",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [{
+                        "left": "${E:A:event_type}",
+                        "op": "==",
+                        "right": "RANGE_IPV4"
+                    },
+                    {
+                        "left": "${E:A:event_type}",
+                        "op": "==",
+                        "right": "RANGE_IPV6"
+                    }
+                ],
+                "eval": "${XC:COPY:{L:IPFrom}:{E:values{start_addr}}}${XC:COPY:{L:IPTo}:{E:values{end_addr}}}${XC:ASSIGN:{L:ObjType}:{S:RANGE}}${XC:ASSIGN:{L:lChar}:{S:-}}"
+            }
+        },
+        {
+            "name": "SetR7_IPF_Host_IPv4",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [{
+                    "left": "${E:A:event_type}",
+                    "op": "==",
+                    "right": "HOST_ADDRESS_IPV4"
+                }],
+                "eval": "${XC:COPY:{L:IPFrom}:{E:values{ipv4addr}}}${XC:COPY:{L:Hostname}:{E:values{host}}}${XC:ASSIGN:{L:IPv}:{S:ipv4addr}}${XC:ASSIGN:{L:ObjType}:{S:HOST}}"
+            }
+        },
+        {
+            "name": "SetR7_IPF_Host_IPv6",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [{
+                    "left": "${E:A:event_type}",
+                    "op": "==",
+                    "right": "HOST_ADDRESS_IPV6"
+                }],
+                "eval": "${XC:COPY:{L:IPFrom}:{E:values{ipv6addr}}}${XC:COPY:{L:Hostname}:{E:values{host}}}${XC:ASSIGN:{L:IPv}:{S:ipv6addr}}${XC:ASSIGN:{L:ObjType}:{S:HOST}}"
+            }
+        },
+        {
+            "name": "SetR7_IPF_Fixed_IPv4",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [{
+                    "left": "${E:A:event_type}",
+                    "op": "==",
+                    "right": "FIXED_ADDRESS_IPV4"
+                }],
+                "eval": "${XC:COPY:{L:IPFrom}:{E:values{ipv4addr}}}${XC:ASSIGN:{L:ObjType}:{S:FIXEDIP}}"
+            }
+        },
+        {
+            "name": "SetR7_IPF_Fixed_IPv6",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [{
+                    "left": "${E:A:event_type}",
+                    "op": "==",
+                    "right": "FIXED_ADDRESS_IPV6"
+                }],
+                "eval": "${XC:COPY:{L:IPFrom}:{E:values{ipv6addr}}}${XC:ASSIGN:{L:ObjType}:{S:FIXEDIP}}"
+            }
+        },
+        {
+            "name": "SetR7_NetToSite",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [{
+                    "left": "${E:A:values{extattrs}{R7_NetToSite}{value}}",
+                    "op": "==",
+                    "right": ""
+                }],
+                "eval": "${XC:ASSIGN:{L:NetToSite}:{S:false}}",
+                "else_eval": "${XC:COPY:{L:NetToSite}:{E:values{extattrs}{R7_NetToSite}{value}}}"
+            }
+        },
+        {
+            "name": "SetR7_RangeToSite",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [{
+                    "left": "${E:A:values{extattrs}{R7_RangeToSite}{value}}",
+                    "op": "==",
+                    "right": ""
+                }],
+                "eval": "${XC:ASSIGN:{L:RangeToSite}:{S:false}}",
+                "else_eval": "${XC:COPY:{L:RangeToSite}:{E:values{extattrs}{R7_RangeToSite}{value}}}"
+            }
+        },
+        {
+            "name": "SetR7_AddByHostname",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [{
+                    "left": "${E:A:values{extattrs}{R7_AddByHostname}{value}}",
+                    "op": "==",
+                    "right": ""
+                }],
+                "eval": "${XC:ASSIGN:{L:AddByHostname}:{S:false}}",
+                "else_eval": "${XC:COPY:{L:AddByHostname}:{E:values{extattrs}{R7_AddByHostname}{value}}}"
+            }
+        },
+        {
+            "name": "SetR7_SiteID",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [{
+                    "left": "${E:A:values{extattrs}{R7_SiteID}{value}}",
+                    "op": "==",
+                    "right": ""
+                }],
+                "eval": "${XC:ASSIGN:{L:SiteID}:{I:0}}",
+                "else_eval": "${XC:COPY:{L:SiteID}:{E:values{extattrs}{R7_SiteID}{value}}}"
+            }
+        },
+        {
+            "name": "findRef_Host",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [{
+                    "left": "${L:A:ObjType}",
+                    "op": "!=",
+                    "right": "HOST"
+                }],
+                "next": "Fin_Vars_Init"
+            }
+        },
+        {
+            "name": "Get Host _ref",
+            "operation": "GET",
+            "transport": {
+                "path": "record:host?_return_fields=name,extattrs&network_view=${E:A:values{network_view}}&name=${L:A:Hostname}&${L:A:IPv}=${L:A:IPFrom}"
+            },
+            "wapi": "v2.6"
+        },
+        {
+            "operation": "CONDITION",
+            "name": "wapi_response_get_ref",
+            "condition": {
+                "statements": [{
+                    "op": "==",
+                    "right": "${P:A:PARSE[0]{_ref}}",
+                    "left": ""
+                }],
+                "condition_type": "AND",
+                "error": true,
+                "else_eval": "${XC:COPY:{L:Obj_ref}:{P:PARSE[0]{_ref}}}"
+            }
+        },
+        {
+            "name": "Debug P vars",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{P:}}"
+        },
+        {
+            "name": "check if host already synced",
+            "operation": "CONDITION",
+            "condition": {
+                "statements": [{
+                    "left": "${P:A:PARSE[0]{extattrs}{R7_SyncedAt}}",
+                    "op": "!=",
+                    "right": ""
+                }],
+                "condition_type": "AND",
+                "stop": true
+            }
+        },
+        {
+            "name": "checkEType_Lease",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [{
+                    "left": "${E:A:event_type}",
+                    "op": "!=",
+                    "right": "LEASE"
+                }],
+                "next": "Fin_Vars_Init"
+            }
+        },
+        {
+            "name": "skip if not defined for lease",
+            "operation": "CONDITION",
+            "condition": {
+                "statements": [{
+                        "left": "${E:A:ip.extattrs{R7_Site}}",
+                        "op": "==",
+                        "right": ""
+                    },
+                    {
+                        "left": "${E:A:ip.extattrs{R7_Sync}}",
+                        "op": "==",
+                        "right": ""
+                    },
+                    {
+                        "left": "${E:A:ip.extattrs{R7_Sync}}",
+                        "op": "==",
+                        "right": "false"
+                    }
+                ],
+                "condition_type": "OR",
+                "stop": true
+            }
+        },
+        {
+            "name": "Debug#0",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "SetR7_L_SiteID",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [{
+                    "left": "${E:A:ip.extattrs{R7_SiteID}}",
+                    "op": "==",
+                    "right": ""
+                }],
+                "eval": "${XC:ASSIGN:{L:SiteID}:{I:0}}",
+                "else_eval": "${XC:COPY:{L:SiteID}:{E:ip.extattrs{R7_SiteID}}}"
+            }
+        },
+        {
+            "name": "assignLVarsLease",
+            "operation": "NOP",
+            "body_list": [
+                "${XC:COPY:{L:Network}:{E:network}}",
+                "${XC:COPY:{L:IPFrom}:{E:address}}",
+                "${XC:COPY:{L:Site}:{E:ip.extattrs{R7_Site}}}",
+                "${XC:COPY:{L:Sync}:{E:ip.extattrs{R7_Sync}}}",
+                "${XC:COPY:{L:ScanTemplate}:{E:ip.extattrs{R7_ScanTemplate}}}",
+                "${XC:COPY:{L:ScanOnAdd}:{E:ip.extattrs{R7_ScanOnAdd}}}",
+                "${XC:COPY:{L:Hostname}:{E:client_hostname}}",
+                "${XC:ASSIGN:{L:SaveEA}:{S:false}}",
+                "${XC:ASSIGN:{L:ObjType}:{S:LEASE}}"
+            ]
+        },
+        {
+            "name": "Debug#1",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "Fin_Vars_Init",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{L:}}"
+        },
+        {
+            "name": "Check SiteID",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [{
+                    "left": "${L:A:SiteID}",
+                    "op": "!=",
+                    "right": "0"
+                }],
+                "next": "GetSiteConf"
+            }
+        },
+        {
+            "name": "Request R7 sites",
+            "parse": "JSON",
+            "operation": "GET",
+            "transport": {
+                "path": "/api/3/sites"
+            }
+        },
+        {
+            "name": "Copy_Over_R7_Sites_to_Variable",
+            "operation": "NOP",
+            "body": "${XC:COPY:{L:site_list}:{P:resources}}"
+        },
+        {
+            "name": "Check if sites list is empty",
+            "operation": "CONDITION",
+            "condition": {
+                "statements": [{
+                    "left": "${L:L:site_list}",
+                    "op": "==",
+                    "right": "0"
+                }],
+                "condition_type": "AND",
+                "stop": true
+            }
+        },
+        {
+            "name": "Pop site from the list",
+            "operation": "VARIABLEOP",
+            "variable_ops": [{
+                "operation": "POP",
+                "type": "DICTIONARY",
+                "destination": "L:a_site",
+                "source": "L:site_list"
+            }]
+        },
+        {
+            "name": "check_a_site",
+            "operation": "CONDITION",
+            "condition": {
+                "statements": [{
+                    "left": "${L:A:Site}",
+                    "op": "!=",
+                    "right": "${L:A:a_site{name}}"
+                }],
+                "condition_type": "AND",
+                "next": "Check if sites list is empty",
+                "else_eval": "${XC:COPY:{L:SiteID}:{L:a_site{id}}}"
+            }
+        },
+        {
+            "name": "checkSaveSiteID",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [{
+                    "left": "${L:A:SaveEA}",
+                    "op": "!=",
+                    "right": "true"
+                }],
+                "next": "GetSiteConf"
+            }
+        },
+        {
+            "name": "Update SiteID",
+            "operation": "PUT",
+            "transport": {
+                "path": "${L:A:Obj_ref}"
+            },
+            "wapi": "v2.6",
+            "wapi_quoting": "JSON",
+            "body_list": [
+                "{",
+                "\"extattrs+\":{\"R7_SiteID\": { \"value\": \"${L:A:SiteID}\"}}",
+                "}"
+            ]
+        },
+        {
+            "name": "GetSiteConf",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [{
+                        "left": "${L:A:ObjType}",
+                        "op": "==",
+                        "right": "NETWORK"
+                    },
+                    {
+                        "left": "${L:A:NetToSite}",
+                        "op": "!=",
+                        "right": "true"
+                    }
+                ],
+                "stop": true
+            }
+        },
+        {
+            "name": "CheckSyncRanges",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [{
+                        "left": "${L:A:ObjType}",
+                        "op": "==",
+                        "right": "RANGE"
+                    },
+                    {
+                        "left": "${L:A:RangeToSite}",
+                        "op": "!=",
+                        "right": "true"
+                    }
+                ],
+                "stop": true
+            }
+        },
+        {
+            "name": "GetSiteTargets_R7",
+            "parse": "JSON",
+            "operation": "GET",          
+            "transport": {
+                "path": "/api/3/sites/${L:A:SiteID}/included_targets"
+            }
+        },
+        {
+            "name": "Check_If_Site_Is_Empty",
+            "operation": "CONDITION",
+            "condition": {
+                "statements": [{
+                    "left": "${P:A:addresses[0]}",
+                    "op": "==",
+                    "right": ""
+                }],
+                "condition_type": "AND",
+                "eval": "${XC:ASSIGN:{L:SiteConfig}:{S:}}",
+                "next": "add by host name"
+            }
+        },
+        {
+            "name": "Copy_Over_R7_Site_Targets_to_Variable #1",
+            "operation": "NOP",
+            "body": "${XC:COPY:{L:SiteConfig}:{P:addresses}}"
+        },
+        {
+            "name": "add by host name",
+            "operation": "CONDITION",
+            "condition": {
+                "statements": [{
+                        "left": "${L:A:Hostname}",
+                        "op": "==",
+                        "right": ""
+                    },
+                    {
+                        "left": "${L:A:ObjType}",
+                        "op": "!=",
+                        "right": "HOST"
+                    },
+                    {
+                        "left": "${L:A:AddByHostname}",
+                        "op": "==",
+                        "right": "false"
+                    }
+                ],
+                "condition_type": "OR",
+                "next": "Net_to_Site_conf"
+            }
+        },
+        {
+            "name": "Hostname_to_Site_conf",
+            "operation": "VARIABLEOP",
+            "variable_ops": [{
+                "operation": "PUSH",
+                "type": "SINGLE",
+                "destination": "L:SiteConfig",
+                "values": ["${L:A:Hostname}"]
+            }]
+        },
+        {
+            "name": "Debug#A",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{H:}}${XC:DEBUG:{E:}}${XC:DEBUG:{I:}}${XC:DEBUG:{L:}}${XC:DEBUG:{S:}}${XC:DEBUG:{P:}}${XC:DEBUG:{UT:}}${XC:DEBUG:{R:}}"
+        },
+        {
+            "name": "save by hostname",
+            "operation": "CONDITION",
+            "condition": {
+                "statements": [{
+                    "right": "1",
+                    "op": "==",
+                    "left": "1"
+                }],
+                "condition_type": "OR",
+                "next": "Save_site_config"
+            }
+        },
+        {
+            "name": "Net_to_Site_conf",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [{
+                    "left": "${L:A:ObjType}",
+                    "op": "!=",
+                    "right": "NETWORK"
+                }],
+                "next": "Other_to_Site_conf"
+            }
+        },
+        {
+            "name": "Push_Network_to_Site_conf",
+            "operation": "VARIABLEOP",
+            "variable_ops": [{
+                "operation": "PUSH",
+                "type": "SINGLE",
+                "destination": "L:SiteConfig",
+                "values": ["${E:A:values{network}}"]
+            }]
+        },
+        {
+            "name": "save network to site",
+            "operation": "CONDITION",
+            "condition": {
+                "statements": [{
+                    "right": "1",
+                    "op": "==",
+                    "left": "1"
+                }],
+                "condition_type": "OR",
+                "next": "Save_site_config"
+            }
+        },
+        {
+            "name": "Other_to_Site_conf",
+            "operation": "VARIABLEOP",
+            "variable_ops": [{
+                "operation": "PUSH",
+                "type": "SINGLE",
+                "destination": "L:SiteConfig",
+                "values": ["${L:A:IPFrom}${L:A:lChar}${L:A:IPTo}"]
+            }]
+        },
+        {
+            "name": "Save_site_config",
+            "parse": "JSON",
+            "operation": "PUT",
+            "transport": {
+                "path": "/api/3/sites/${L:A:SiteID}/included_targets"
+            },
+            "body_list": [
+                "${L:S:SiteConfig[]}"
+            ]
+        },
+        {
+            "name": "checkSaveSyncedAt",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [{
+                    "left": "${L:A:SaveEA}",
+                    "op": "!=",
+                    "right": "true"
+                }],
+                "next": "check_Scan_on_Add"
+            }
+        },
+        {
+            "name": "Update R7_SyncedAt",
+            "operation": "PUT",
+            "transport": {
+                "path": "${L:A:Obj_ref}"
+            },
+            "wapi": "v2.6",
+            "wapi_quoting": "JSON",
+            "body_list": [
+                "{",
+                "\"extattrs+\":{\"R7_SyncedAt\": { \"value\": \"${UT:U:TIME}\"}}",
+                "}"
+            ]
+        },
+        {
+            "name": "check_Scan_on_Add",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [{
+                        "left": "${L:A:ScanOnAdd}",
+                        "op": "==",
+                        "right": "false"
+                    }
+                ],
+                "stop": true
+            }
+        },
+        {
+            "name": "assignScanVars",
+            "operation": "NOP",
+            "body_list": [
+                "${XC:COPY:{L:ScanDate}:{UT:TIME}}${XC:FORMAT:TRUNCATE:{L:ScanDate}:{10t}}",
+                "${XC:COPY:{L:R7ScanSchTime}:{UT:EPOCH}}${XC:FORMAT:DATE_STRFTIME:{L:R7ScanSchTime}:{%Y%m%dT%H%M59000Z}}"
+            ]
+        },
+        {
+            "name": "Create a schedule",
+            "operation": "SERIALIZE",
+            "serializations": [{
+                    "destination": "L:R7ScanSch",
+                    "content": ", \"templateId\":\"${L:A:ScanTemplate}\""
+                },
+                {
+                    "destination": "L:R7ScanByHost",
+                    "content": "${L:A:Hostname}"
+                },
+                {
+                    "destination": "L:R7ScanByIP",
+                    "content": "${L:A:IPFrom}"
+                }
+            ]
+        },
+        {
+            "name": "scanByHostname",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [{
+                        "left": "${L:A:AddByHostname}",
+                        "op": "==",
+                        "right": "true"
+                    },
+                    {
+                        "left": "${L:A:Hostname}",
+                        "op": "!=",
+                        "right": ""
+                    }
+                ],
+                "eval": "${XC:COPY:{L:R7ScanHostsRanges}:{L:R7ScanByHost}}",
+                "else_eval": "${XC:COPY:{L:R7ScanHostsRanges}:{L:R7ScanByIP}}"
+            }
+        },
+        {
+            "name": "Check_if_default_scan_wanted",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [{
+                        "left": "${L:A:ScanTemplate}",
+                        "op": "==",
+                        "right": "default"
+                    },
+                    {
+                        "left": "${L:A:ScanTemplate}",
+                        "op": "==",
+                        "right": ""
+                    }
+                ],
+                "eval": "${XC:ASSIGN:{L:R7ScanSch}:{S:}}"
+            }
+        },
+        {
+            "name": "ifNetworkSetHostsForScanning",
+            "comment": "If the event is a network, set the 'hosts' field in the scan request to the CIDR of the network.",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [
+                    {
+                        "left": "${E:A:event_type}",
+                        "op": "=~",
+                        "right": "NETWORK"
+                    }
+                ],
+                "eval": "${XC:COPY:{L:R7ScanHostsRanges}:{E:values{network}}}"
+            }
+        },
+        {
+            "name": "ifRangeSetHostsForScanning",
+            "comment": "If the event is a range, use the start_addr and end_addr for the 'hosts' field in the scan request.",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "OR",
+                "statements": [
+                    {
+                        "left": "${E:A:event_type}",
+                        "op": "=~",
+                        "right": "RANGE"
+                    }
+                ],
+                "next": "RequestAssetScanRange",
+                "else_next": "RequestAssetScan"
+            }
+        },
+        {
+            "name": "RequestAssetScanRange",
+            "comment": "If the event is a range, use the start_addr and end_addr for the 'hosts' field in the scan request.",
+            "operation": "POST",
+            "parse": "JSON",
+            "transport": {
+                "path": "/api/3/sites/${L:A:SiteID}/scans"
+            },
+            "body_list": [
+                "{",
+                "\"hosts\": [",
+                "\"${E:A:values{start_addr}} - ${E:A:values{end_addr}}\"",
+                "]",
+                "${L:A:R7ScanSch}",
+                "}"
+            ],
+            "result": [{
+                "codes": "200,201,202,203,204",
+                "next": "checkSaveLastScan"
+            }]
+        },
+        {
+            "name": "RequestAssetScan",
+            "operation": "POST",
+            "parse": "JSON",
+            "transport": {
+                "path": "/api/3/sites/${L:A:SiteID}/scans"
+            },
+            "body_list": [
+                "{",
+                "\"hosts\": [",
+                "\"${L:A:R7ScanHostsRanges}\"",
+                "]",
+                "${L:A:R7ScanSch}",
+                "}"
+            ]
+        },
+        {
+            "name": "checkSaveLastScan",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [{
+                    "left": "${L:A:SaveEA}",
+                    "op": "!=",
+                    "right": "true"
+                }],
+                "next": "FinInsert"
+            }
+        },
+        {
+            "name": "Update R7_LastScan",
+            "operation": "PUT",
+            "transport": {
+                "path": "${L:A:Obj_ref}"
+            },
+            "wapi": "v2.6",
+            "wapi_quoting": "JSON",
+            "body_list": [
+                "{",
+                "\"extattrs+\":{\"R7_LastScan\": { \"value\": \"${L:U:ScanDate}\"}}",
+                "}"
+            ]
+        },
+        {
+            "name": "FinInsert",
+            "operation": "NOP",
+            "body": "${XC:DEBUG:{L:}}${XC:DEBUG:{E:}}${XC:DEBUG:{S:}}"
+        },
+        {
+            "name": "StopInsert",
+            "operation": "CONDITION",
+            "condition": {
+                "condition_type": "AND",
+                "statements": [{
+                    "left": "1",
+                    "op": "==",
+                    "right": "1"
+                }],
+                "stop": true
+            }
+        }
+    ]
+}
