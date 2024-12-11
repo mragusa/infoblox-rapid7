@@ -1,0 +1,19 @@
+{
+    "name": "Rapid7 Nexpose Session",
+    "version": "5.0",
+    "type": "REST_ENDPOINT",
+    "comment": "no comments",
+    "vendor_identifier": "Rapid7",
+    "step_execution_limit": 100,
+    "inactivity_interval": 100000,
+    "keepalive": true,
+    "override_path": true,
+    "rate_limit": 0,
+    "rate_limit_requests": 10,
+    "rate_limit_interval": 1000,
+    "rate_limit_reset": 1000,
+    "retry": 0,
+    "retry_template": 0,
+    "step_execution_limit": 100
+
+}
