@@ -2,12 +2,16 @@
 # TODO
 # Finish EA creation
 # Sync R7 to Infoblox
+# Add switch to enable syncing btween r7 and ibx
+# Write method for displaying output from R7 or Infoblox in Tables
+# Sites and Templates
 
 
 import requests
 import getpass
 import sys
-import re
+
+# import re
 from rich.console import Console
 from rich.table import Table
 import click
@@ -15,18 +19,18 @@ from click_option_group import optgroup
 
 from requests.auth import HTTPBasicAuth
 
-# from ibx_sdk.logger.ibx_logger import init_logger, increase_log_level
+from ibx_sdk.logger.ibx_logger import init_logger
 from ibx_sdk.nios.exceptions import WapiRequestException
 from ibx_sdk.nios.gift import Gift
 
-# log = init_logger(
-#    logfile_name="wapi.log",
-#    logfile_mode="a",
-#    console_log=True,
-#    level="info",
-#    max_size=100000,
-#    num_logs=1,
-# )
+log = init_logger(
+    logfile_name="wapi.log",
+    logfile_mode="a",
+    console_log=True,
+    level="info",
+    max_size=100000,
+    num_logs=1,
+)
 
 
 @click.command()
@@ -40,20 +44,26 @@ from ibx_sdk.nios.gift import Gift
 @optgroup.option("--grdmgr", help="Infoblox Grid Master")
 @optgroup.option("--grdusr", help="Infoblox Grid User")
 @optgroup.group("Infoblox Actions")
-@optgroup.option("--ea", is_flag=True, help="List Infoblox Extensible Attributes")
-@optgroup.option("--create", is_flag=True, help="List Infoblox Extensible Attributes")
-def main(rapid7host, rapid7user, grdmgr, grdusr, sites, templates, ea, create):
-    #    log = init_logger
-
+@optgroup.option("--ea", is_flag=True, help="List Infoblox R7 Extensible Attributes")
+@optgroup.option(
+    "--create", is_flag=True, help="Create Infoblox R7 Extensible Attributes"
+)
+@optgroup.option(
+    "--sync",
+    is_flag=True,
+    help="Sync R7 Sites and Templates with Infoblox on EA creation",
+)
+def main(rapid7host, rapid7user, grdmgr, grdusr, sites, templates, ea, create, sync):
     if ea:
         get_ibx_ea(ibx_conn(grdmgr, grdusr))
 
     if sites:
         r7_sites = get_sites(rapid7host, rapid7user)
         if r7_sites:
-            print(f"Retrieved {len(r7_sites)} sites:")
-            for site in r7_sites:
-                print(f"- {site['id']}: {site['name']}")
+            print(f"Retrieved {len(r7_sites)} sites")
+            display_r7_sites(r7_sites)
+        else:
+            print("Rapid7 sites not found")
 
     if templates:
         scan_templates = get_scan_templates(rapid7host, rapid7user)
@@ -62,7 +72,7 @@ def main(rapid7host, rapid7user, grdmgr, grdusr, sites, templates, ea, create):
                 print(template["name"])
 
     if create:
-        create_ibx_ea(ibx_conn(grdmgr, grdusr))
+        create_ibx_ea(ibx_conn(grdmgr, grdusr), sync)
 
 
 # Function to get the list of get_sites
@@ -161,7 +171,7 @@ def get_ibx_ea(wapi):
     console.print(table)
 
 
-def create_ibx_ea(wapi):
+def create_ibx_ea(wapi, sync):
     rapid7_ea = {
         "R7_AddByHostname": {
             "comment": "Defines if a host should be synced with Rapid7 Nexpose  a hostname. The hostname should be resolvable by Nexpose",
@@ -311,12 +321,25 @@ def create_ibx_ea(wapi):
         },
     }
     for r in rapid7_ea:
-        eaBody = (rapid7_ea[r])
-        r7ea = wapi.post('extensibleattributedef', json=eaBody)
+        if sync:
+            r7_sites = get_sites(rapid7host, rapid7user)
+            r7_templates = get_scan_templates(rapid7host, rapid7user)
+        eaBody = rapid7_ea[r]
+        r7ea = wapi.post("extensibleattributedef", json=eaBody)
         if r7ea.status_code != 200:
             print(r7ea.status_code, r7ea.text)
         else:
             print(r7ea.json())
+
+
+def display_r7_sites(r7_sites):
+    table = Table(title="Rapid7 Sites")
+    table.add_column("Site Name", justify="center")
+    table.add_column("Site ID", justify="center")
+    for s in r7_sites:
+        table.add_row(s["name"], s["id"])
+    console = Console()
+    console.print(table)
 
 
 # Main script
