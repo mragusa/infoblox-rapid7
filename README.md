@@ -30,6 +30,7 @@ Summary of notes from Infoblox Rapid7 integration based on the [Infoblox Deploym
 
 > [!WARNING]
 > R7_LastScan and R7_SyncedAt are updated by the assets management template. These extensible attributes should never be updated manually.
+
 > [!CAUTION]
 > DHCP ranges should not be synced with Rapid7 due to the amount of traffic that can potentially cause issues with rabbitmq. The parent network should be configured to sync instead.
 
@@ -75,6 +76,4 @@ Options:
     --sync                 Sync R7 Sites and Templates with Infoblox on EA
                            creation
   --help                   Show this message and exit.
-```
-```
 ```
