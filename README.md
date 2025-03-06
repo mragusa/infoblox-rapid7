@@ -24,7 +24,12 @@ Summary of notes from Infoblox Rapid7 integration based on the [Infoblox Deploym
 * All Hosts - RW
 * All DHCP v4/v6 Fixed Addresses and Reservations - RW
 * All IPv4/IPv6 Networks - RW
+
 ## Rapid7 User Permissions
+*	Specify Scan Targets
+*	Start Unscheduled Scans
+*	“Site Access” to Sites being used
+
 
 ## Rapid7 Extensible Attribute Notes 
 
