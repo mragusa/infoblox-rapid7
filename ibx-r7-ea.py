@@ -72,7 +72,8 @@ def main(rapid7host, rapid7user, grdmgr, grdusr, sites, templates, ea, create, s
                 print(template["name"])
 
     if create:
-        create_ibx_ea(ibx_conn(grdmgr, grdusr), sync)
+        # create_ibx_ea(ibx_conn(grdmgr, grdusr), sync, rapid7host, rapid7user)
+        create_ibx_ea(ibx_conn(grdmgr, grdusr))
 
 
 # Function to get the list of get_sites
@@ -171,39 +172,40 @@ def get_ibx_ea(wapi):
     console.print(table)
 
 
-def create_ibx_ea(wapi, sync):
-    rapid7_ea = {
-        "R7_AddByHostname": {
-            "comment": "Defines if a host should be synced with Rapid7 Nexpose  a hostname. The hostname should be resolvable by Nexpose",
-            "type": "ENUM",
-            "list_values": ["true", "false"],
-            "flags": "AIL",
+# def create_ibx_ea(wapi, sync, rapid7host, rapid7user):
+def create_ibx_ea(wapi):
+    rapid7_ea = [
+        {
             "name": "R7_AddByHostname",
-            "descendants": {
+            "comment": "Defines if a host should be synced with Rapid7. The hostname should be resolvable by Rapid7",
+            "type": "ENUM",
+            "list_values": [{"value": "true"}, {"value": "false"}],
+            "flags": "AIL",
+            "descendants_action": {
                 "option_with_ea": "INHERIT",
                 "option_delete_ea": "REMOVE",
                 "option_without_ea": "INHERIT",
             },
             "default_value": "false",
         },
-        "R7_LastScan": {
-            "comment": "Contains a date when an asset was scanned last time by a request from Infoblox",
+        {
+            "name": "R7_LastScan",
+            "comment": "Contains a date when an asset was last scanned by a request from Infoblox. This is updated automatically by Rapid7",
             "type": "DATE",
             "flags": "AI",
-            "name": "R7_LastScan",
-            "descendants": {
+            "descendants_action": {
                 "option_with_ea": "INHERIT",
                 "option_delete_ea": "REMOVE",
                 "option_without_ea": "INHERIT",
             },
         },
-        "R7_NetToSite": {
-            "comment": "Defines if a network should be added to a site. If R7_NetToSite is false but R7_Sync is true R7_SiteID will be updated",
-            "type": "ENUM",
-            "list_values": ["true", "false"],
-            "flags": "AIL",
+        {
             "name": "R7_NetToSite",
-            "descendants": {
+            "comment": "Defines if a network should be added to a site. If R7_NetToSite is false but R7_Sync is true, R7_SiteID will be updated",
+            "type": "ENUM",
+            "list_values": [{"value": "true"}, {"value": "false"}],
+            "flags": "AIL",
+            "descendants_action": {
                 "option_with_ea": "INHERIT",
                 "option_delete_ea": "REMOVE",
                 "option_without_ea": "INHERIT",
@@ -211,13 +213,13 @@ def create_ibx_ea(wapi, sync):
             "default_value": "true",
             "allowed_object_types": ["Network", "IPv6Network"],
         },
-        "R7_RangeToSite": {
-            "comment": "Defines if a range should be added to a site.",
-            "type": "ENUM",
-            "list_values": ["true", "false"],
-            "flags": "AIL",
+        {
             "name": "R7_RangeToSite",
-            "descendants": {
+            "comment": "Defines if a DHCP range should be added to a Rapid7 Site.",
+            "type": "ENUM",
+            "list_values": [{"value": "true"}, {"value": "false"}],
+            "flags": "AIL",
+            "descendants_action": {
                 "option_with_ea": "INHERIT",
                 "option_delete_ea": "REMOVE",
                 "option_without_ea": "INHERIT",
@@ -232,104 +234,107 @@ def create_ibx_ea(wapi, sync):
                 "IPv6FixedAddress",
             ],
         },
-        "R7_ScanOnAdd": {
+        {
+            "name": "R7_ScanOnAdd",
             "comment": "Defines if an asset should be scanned immediately after creation",
             "type": "ENUM",
-            "list_values": ["true", "false"],
+            "list_values": [{"value": "true"}, {"value": "false"}],
             "flags": "AIL",
-            "name": "R7_ScanOnAdd",
-            "descendants": {
+            "descendants_action": {
                 "option_with_ea": "INHERIT",
                 "option_delete_ea": "REMOVE",
                 "option_without_ea": "INHERIT",
             },
             "default_value": "true",
         },
-        "R7_ScanOnEvent": {
+        {
+            "name": "R7_ScanOnEvent",
             "comment": "Defines if an asset should be scanned if RPZ or DNS Tunneling events are triggered",
             "type": "ENUM",
-            "list_values": ["true", "false"],
+            "list_values": [{"value": "true"}, {"value": "false"}],
             "flags": "AIL",
-            "name": "R7_ScanOnEvent",
-            "descendants": {
+            "descendants_action": {
                 "option_with_ea": "INHERIT",
                 "option_delete_ea": "REMOVE",
                 "option_without_ea": "INHERIT",
             },
             "default_value": "false",
         },
-        "R7_ScanTemplate": {
-            "comment": "Defines a Rapid7 Nexpose/ InsightVM template which should be used for",
+        {
+            "name": "R7_ScanTemplate",
+            "comment": "Defines which Rapid7 Nexpose/InsightVM template should be used for scanning an asset",
             "flags": "AIL",
             "type": "ENUM",
-            "list_values": ["Discovery Scan"],
-            "name": "R7_ScanTemplate",
-            "descendants": {
+            "list_values": [{"value": "Discovery Scan"}],
+            "descendants_action": {
                 "option_with_ea": "INHERIT",
                 "option_delete_ea": "REMOVE",
                 "option_without_ea": "INHERIT",
             },
             "default_value": "Discovery Scan",
         },
-        "R7_Site": {
+        {
+            "name": "R7_Site",
             "comment": "Defines a Rapid7 Site Name",
             "type": "ENUM",
             "flags": "AIL",
-            "list_values": ["Test-Site"],
-            "name": "R7_Site",
-            "descendants": {
+            "list_values": [{"value": "Test-Site"}],
+            "descendants_action": {
                 "option_with_ea": "INHERIT",
                 "option_delete_ea": "REMOVE",
                 "option_without_ea": "INHERIT",
             },
             "default_value": "Test-Site",
         },
-        "R7_SiteID": {
+        {
+            "name": "R7_SiteID",
             "comment": "Contains an internal site ID. Updated automatically. If the value was inherited from a top level, templates will bypass a few steps retrieving this ID.",
             "type": "INTEGER",
             "flags": "AIL",
-            "name": "R7_SiteID",
-            "descendants": {
+            "descendants_action": {
                 "option_with_ea": "INHERIT",
                 "option_delete_ea": "REMOVE",
                 "option_without_ea": "INHERIT",
             },
         },
-        "R7_Sync": {
+        {
+            "name": "R7_Sync",
             "comment": "Defines if an object should be synced with Rapid7 Nexpose",
             "type": "ENUM",
-            "list_values": ["true", "false"],
+            "list_values": [{"value": "true"}, {"value": "false"}],
             "flags": "AIL",
-            "name": "R7_Sync",
-            "descendants": {
+            "descendants_action": {
                 "option_with_ea": "INHERIT",
                 "option_delete_ea": "REMOVE",
                 "option_without_ea": "INHERIT",
             },
             "default_value": "true",
         },
-        "R7_SyncedAt": {
+        {
+            "name": "R7_SyncedAt",
             "comment": "Contains date/time when the object was synchronized, updated by the assets management template",
             "type": "DATE",
             "flags": "AI",
-            "name": "R7_SyncedAt",
-            "descendants": {
+            "descendants_action": {
                 "option_with_ea": "INHERIT",
                 "option_delete_ea": "REMOVE",
                 "option_without_ea": "INHERIT",
             },
         },
-    }
+    ]
     for r in rapid7_ea:
-        if sync:
-            r7_sites = get_sites(rapid7host, rapid7user)
-            r7_templates = get_scan_templates(rapid7host, rapid7user)
-        eaBody = rapid7_ea[r]
-        r7ea = wapi.post("extensibleattributedef", json=eaBody)
-        if r7ea.status_code != 200:
-            print(r7ea.status_code, r7ea.text)
-        else:
-            print(r7ea.json())
+        # if sync:
+        #    r7_sites = get_sites(rapid7host, rapid7user)
+        #    r7_templates = get_scan_templates(rapid7host, rapid7user)
+        # eaBody = rapid7_ea[r]
+        try:
+            r7ea = wapi.post("extensibleattributedef", json=r)
+            if r7ea.status_code != 201:
+                print(r7ea.status_code, r7ea.text)
+            else:
+                print(r7ea.json())
+        except WapiRequestException as err:
+            print(err)
 
 
 def display_r7_sites(r7_sites):
