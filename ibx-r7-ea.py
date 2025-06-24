@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # TODO
-# Finish EA creation
 # Sync R7 to Infoblox
-# Add switch to enable syncing btween r7 and ibx
 # Write method for displaying output from R7 or Infoblox in Tables
 # Sites and Templates
 
@@ -45,6 +43,7 @@ log = init_logger(
 @optgroup.option("--grdusr", help="Infoblox Grid User")
 @optgroup.group("Infoblox Actions")
 @optgroup.option("--ea", is_flag=True, help="List Infoblox R7 Extensible Attributes")
+@optgroup.group("Infoblox Creation Actions")
 @optgroup.option(
     "--create", is_flag=True, help="Create Infoblox R7 Extensible Attributes"
 )
@@ -70,10 +69,12 @@ def main(rapid7host, rapid7user, grdmgr, grdusr, sites, templates, ea, create, s
         if scan_templates:
             for template in scan_templates:
                 print(template["name"])
+        else:
+            print("Scan Templates not found")
 
     if create:
-        # create_ibx_ea(ibx_conn(grdmgr, grdusr), sync, rapid7host, rapid7user)
-        create_ibx_ea(ibx_conn(grdmgr, grdusr))
+        create_ibx_ea(ibx_conn(grdmgr, grdusr), sync, rapid7host, rapid7user)
+        # create_ibx_ea(ibx_conn(grdmgr, grdusr))
 
 
 # Function to get the list of get_sites
@@ -172,8 +173,7 @@ def get_ibx_ea(wapi):
     console.print(table)
 
 
-# def create_ibx_ea(wapi, sync, rapid7host, rapid7user):
-def create_ibx_ea(wapi):
+def create_ibx_ea(wapi, sync, rapid7host, rapid7user):
     rapid7_ea = [
         {
             "name": "R7_AddByHostname",
@@ -322,11 +322,27 @@ def create_ibx_ea(wapi):
             },
         },
     ]
+
+    if sync:
+        rapid7_ea[6]["list_values"].pop(0)
+        rapid7_ea[7]["list_values"].pop(0)
+        r7_templates = get_scan_templates(rapid7host, rapid7user)
+        if r7_templates:
+            for t in r7_templates:
+                rapid7_ea[6]["list_values"].append({"value": t["name"]})
+            rapid7_ea[6]["default_value"] = rapid7_ea[6]["list_values"][0]["value"]
+        else:
+            print("Rapid7 Templates not found")
+
+        r7_sites = get_sites(rapid7host, rapid7user)
+        if r7_sites:
+            for s in r7_sites:
+                rapid7_ea[7]["list_values"].append({"value": s["name"]})
+            rapid7_ea[7]["default_value"] = rapid7_ea[7]["list_values"][0]["value"]
+        else:
+            print("Rapid7 Sites not configured")
+
     for r in rapid7_ea:
-        # if sync:
-        #    r7_sites = get_sites(rapid7host, rapid7user)
-        #    r7_templates = get_scan_templates(rapid7host, rapid7user)
-        # eaBody = rapid7_ea[r]
         try:
             r7ea = wapi.post("extensibleattributedef", json=r)
             if r7ea.status_code != 201:
@@ -342,7 +358,7 @@ def display_r7_sites(r7_sites):
     table.add_column("Site Name", justify="center")
     table.add_column("Site ID", justify="center")
     for s in r7_sites:
-        table.add_row(s["name"], s["id"])
+        table.add_row(s["name"], str(s["id"]))
     console = Console()
     console.print(table)
 
