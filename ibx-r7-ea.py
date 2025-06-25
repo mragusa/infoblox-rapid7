@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # TODO
 # Fix duplicate r7 connection code
+# Add logging for wapi.log output
+
 import requests
 import getpass
 import sys
