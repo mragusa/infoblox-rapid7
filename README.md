@@ -67,18 +67,28 @@ Usage: ibx-r7-ea.py [OPTIONS]
 
 Options:
   Rapid7 Server Options:
-    --rapid7host TEXT      Rapid7 Server
-    --rapid7user TEXT      Rapid7 User
+    --rapid7host TEXT          Rapid7 Server
+    --rapid7user TEXT          Rapid7 User
   Rapid7 Actions:
-    --sites                List Rapid7 Sites
-    --templates            List Rapid7 Scan Templates
+    --sites                    List Rapid7 Sites
+    --templates                List Rapid7 Scan Templates
   Infoblox Grid Options:
-    --grdmgr TEXT          Infoblox Grid Master
-    --grdusr TEXT          Infoblox Grid User
+    --grdmgr TEXT              Infoblox Grid Master
+    --grdusr TEXT              Infoblox Grid User
   Infoblox Actions:
-    --ea                   List Infoblox R7 Extensible Attributes
-    --create               Create Infoblox R7 Extensible Attributes
-    --sync                 Sync R7 Sites and Templates with Infoblox on EA
-                           creation
-  --help                   Show this message and exit.
+    --ea                       List Infoblox R7 Extensible Attributes
+  Infoblox Creation Actions:
+    --create                   Create Infoblox R7 Extensible Attributes
+    --sync                     Sync R7 Sites and Templates with Infoblox on EA
+                               creation
+  --help                       Show this message and exit.
+```
+
+### Examples
+```
+./ibx-r7-ea.py --rapid7host 10.113.20.40 --rapid7user infoblox --templates
+./ibx-r7-ea.py --rapid7host 10.113.20.40 --rapid7user infoblox --sites
+./ibx-r7-ea.py --grdmgr 192.168.1.2 --grdusr admin --ea
+./ibx-r7-ea.py --rapid7host 10.113.20.40 --rapid7user infoblox --create --grdmgr 192.168.1.2 --grdusr admin --sync
+./ibx-r7-ea.py --rapid7host 10.113.20.40 --rapid7user infoblox --create --grdmgr 192.168.1.2 --grdusr admin
 ```
