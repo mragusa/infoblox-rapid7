@@ -89,6 +89,8 @@ Options:
 ./ibx-r7-ea.py --rapid7host 10.113.20.40 --rapid7user infoblox --templates
 ./ibx-r7-ea.py --rapid7host 10.113.20.40 --rapid7user infoblox --sites
 ./ibx-r7-ea.py --grdmgr 192.168.1.2 --grdusr admin --ea
-./ibx-r7-ea.py --rapid7host 10.113.20.40 --rapid7user infoblox --create --grdmgr 192.168.1.2 --grdusr admin --sync
 ./ibx-r7-ea.py --rapid7host 10.113.20.40 --rapid7user infoblox --create --grdmgr 192.168.1.2 --grdusr admin
+./ibx-r7-ea.py --rapid7host 10.113.20.40 --rapid7user infoblox --create --grdmgr 192.168.1.2 --grdusr admin --sync
 ```
+
+![Demo](infoblox-nios-rapid7.gif)
