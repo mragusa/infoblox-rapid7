@@ -50,7 +50,17 @@ log = init_logger(
     is_flag=True,
     help="Sync R7 Sites and Templates with Infoblox on EA creation",
 )
-def main(rapid7host, rapid7user, grdmgr, grdusr, sites, templates, ea, create, sync):
+def main(
+    rapid7host: str,
+    rapid7user: str,
+    grdmgr: str,
+    grdusr: str,
+    sites: bool,
+    templates: bool,
+    ea: bool,
+    create: bool,
+    sync: bool,
+) -> None:
     if ea:
         get_ibx_ea(ibx_conn(grdmgr, grdusr))
 
@@ -75,7 +85,7 @@ def main(rapid7host, rapid7user, grdmgr, grdusr, sites, templates, ea, create, s
 
 
 # Function to get the list of get_sites
-def get_sites(rapid7host, rapid7user):
+def get_sites(rapid7host: str, rapid7user: str):
     password = getpass.getpass("Enter Rapid7 Password: ")
     endpoint = f"https://{rapid7host}:3780/api/3/sites"
     try:
@@ -97,7 +107,7 @@ def get_sites(rapid7host, rapid7user):
         return None
 
 
-def get_scan_templates(rapid7host, rapid7user):
+def get_scan_templates(rapid7host: str, rapid7user: str):
     password = getpass.getpass("Enter Rapid7 Password: ")
     endpoint = f"https://{rapid7host}:3780/api/3/scan_templates"
     try:
@@ -119,7 +129,7 @@ def get_scan_templates(rapid7host, rapid7user):
         return None
 
 
-def ibx_conn(grdmgr, username):
+def ibx_conn(grdmgr: str, username: str):
     wapi = Gift()
     wapi.grid_mgr = grdmgr
     password = getpass.getpass("Enter Infoblox Password: ")
@@ -170,7 +180,7 @@ def get_ibx_ea(wapi):
     console.print(table)
 
 
-def create_ibx_ea(wapi, sync, rapid7host, rapid7user):
+def create_ibx_ea(wapi, sync: bool, rapid7host: str, rapid7user: str):
     rapid7_ea = [
         {
             "name": "R7_AddByHostname",
@@ -350,7 +360,7 @@ def create_ibx_ea(wapi, sync, rapid7host, rapid7user):
             print(err)
 
 
-def display_r7_sites(r7_sites):
+def display_r7_sites(r7_sites: list):
     table = Table(title="Rapid7 Sites")
     table.add_column("Site Name", justify="center")
     table.add_column("Site ID", justify="center")
@@ -360,7 +370,7 @@ def display_r7_sites(r7_sites):
     console.print(table)
 
 
-def display_r7_templates(scan_templates):
+def display_r7_templates(scan_templates: list):
     table = Table(title="Rapid7 Templates")
     table.add_column("Template Name", justify="center")
     table.add_column("Description", justify="center")
