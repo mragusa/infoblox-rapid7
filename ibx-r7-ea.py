@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 # TODO
-# Sync R7 to Infoblox
-# Write method for displaying output from R7 or Infoblox in Tables
-# Sites and Templates
-
-
+# Fix duplicate r7 connection code
 import requests
 import getpass
 import sys
@@ -67,14 +63,13 @@ def main(rapid7host, rapid7user, grdmgr, grdusr, sites, templates, ea, create, s
     if templates:
         scan_templates = get_scan_templates(rapid7host, rapid7user)
         if scan_templates:
-            for template in scan_templates:
-                print(template["name"])
+            print(f"Retrieved {len(scan_templates)} templates")
+            display_r7_templates(scan_templates)
         else:
             print("Scan Templates not found")
 
     if create:
         create_ibx_ea(ibx_conn(grdmgr, grdusr), sync, rapid7host, rapid7user)
-        # create_ibx_ea(ibx_conn(grdmgr, grdusr))
 
 
 # Function to get the list of get_sites
@@ -359,6 +354,16 @@ def display_r7_sites(r7_sites):
     table.add_column("Site ID", justify="center")
     for s in r7_sites:
         table.add_row(s["name"], str(s["id"]))
+    console = Console()
+    console.print(table)
+
+
+def display_r7_templates(scan_templates):
+    table = Table(title="Rapid7 Templates")
+    table.add_column("Template Name", justify="center")
+    table.add_column("Description", justify="center")
+    for t in scan_templates:
+        table.add_row(t["name"], t["description"])
     console = Console()
     console.print(table)
 
