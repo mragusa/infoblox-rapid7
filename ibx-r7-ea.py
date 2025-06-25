@@ -60,7 +60,7 @@ def main(rapid7host, rapid7user, grdmgr, grdusr, sites, templates, ea, create, s
             print(f"Retrieved {len(r7_sites)} sites")
             display_r7_sites(r7_sites)
         else:
-            print("Rapid7 sites not found")
+            print("Rapid7 Sites not found")
 
     if templates:
         scan_templates = get_scan_templates(rapid7host, rapid7user)
@@ -68,7 +68,7 @@ def main(rapid7host, rapid7user, grdmgr, grdusr, sites, templates, ea, create, s
             print(f"Retrieved {len(scan_templates)} templates")
             display_r7_templates(scan_templates)
         else:
-            print("Scan Templates not found")
+            print("Rapid7 Scan Templates not found")
 
     if create:
         create_ibx_ea(ibx_conn(grdmgr, grdusr), sync, rapid7host, rapid7user)
@@ -122,7 +122,7 @@ def get_scan_templates(rapid7host, rapid7user):
 def ibx_conn(grdmgr, username):
     wapi = Gift()
     wapi.grid_mgr = grdmgr
-    password = getpass.getpass("Enter Password: ")
+    password = getpass.getpass("Enter Infoblox Password: ")
     try:
         wapi.connect(username=username, password=password)
     except WapiRequestException as err:
