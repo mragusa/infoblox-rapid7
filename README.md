@@ -2,7 +2,7 @@
 A collection of tools, notes, and templates for integrating the Infoblox NIOS platform with Rapid7
 
 ## Overview
-Summary of notes from Infoblox Rapid7 integration based on the [Infoblox Deployment Guide](https://community.infoblox.com/cixhp49439/attachments/cixhp49439/Rapid7/8/6/Rapid7%20Deployment%20Guide.pdf)
+Summary of notes from Infoblox Rapid7 integration based on the [Infoblox Deployment Guide](https://insights.infoblox.com/resources-deployment-guides/infoblox-deployment-guide-outbound-api-integration-with-rapid7-nexpose)
 
 ## NIOS Ecosystem Templates
 
