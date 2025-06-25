@@ -1,4 +1,4 @@
-# infoblox-rapid7
+# Infoblox-Rapid7
 A collection of tools, notes, and templates for integrating the Infoblox NIOS platform with Rapid7
 
 ## Overview
