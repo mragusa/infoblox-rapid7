@@ -85,11 +85,21 @@ Options:
 ```
 
 ### Examples
+#### Display Rapid7 Sites and Templates
 ```
 ./ibx-r7-ea.py --rapid7host 10.113.20.40 --rapid7user infoblox --templates
 ./ibx-r7-ea.py --rapid7host 10.113.20.40 --rapid7user infoblox --sites
+```
+#### Display NIOS Rapid7 Extensible Attributes
+```
 ./ibx-r7-ea.py --grdmgr 192.168.1.2 --grdusr admin --ea
+```
+#### Create NIOS Extensible Attributes
+```
 ./ibx-r7-ea.py --rapid7host 10.113.20.40 --rapid7user infoblox --create --grdmgr 192.168.1.2 --grdusr admin
+```
+#### Create NIOS Extensible Attributes and Sync Sites and Templates with Rapid7
+```
 ./ibx-r7-ea.py --rapid7host 10.113.20.40 --rapid7user infoblox --create --grdmgr 192.168.1.2 --grdusr admin --sync
 ```
 
