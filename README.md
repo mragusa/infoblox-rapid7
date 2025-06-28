@@ -59,6 +59,22 @@ Summary of notes from Infoblox Rapid7 integration based on the [Infoblox Deploym
 | `R7_SiteID` | None | Contains an internal site ID | INTEGER |
 
 
+## Python Setup
+1. Setup Python venv
+```
+python3 -m venv venv
+```
+
+2. Change to new environment
+```
+source venv/bin/activate
+```
+
+3. Install Required Packages 
+```
+pip install -r requirements.txt
+```
+
 ## Script Details
 ### ibx-r7-ea.py
 ```
